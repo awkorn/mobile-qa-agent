@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { TestPlan } from "../types/TestArchitecture.js";
+import type { RepoValueDetection, TestPlan } from "../types/TestArchitecture.js";
 
 export class TestPlanWriter {
   async write(outputDir: string, plan: TestPlan): Promise<{ markdownPath: string; jsonPath: string }> {
@@ -36,6 +36,7 @@ ${risk.recommendedCoverage.map((item) => `- ${item}`).join("\n")}`
     const apiTests = plan.apiTestSuggestions
       .map((test) => `- **${test.name}** (${test.fileName}): ${test.notes.join(" ")}`)
       .join("\n");
+    const detectedFacts = this.detectedFactsToMarkdown(plan);
 
     return `# Risk-Based Test Plan: ${plan.feature}
 
@@ -52,6 +53,10 @@ ${plan.summary}
 - API-like files: ${plan.repoScan.totals.apiLikeFiles}
 - testID selectors found: ${plan.repoScan.totals.testIds}
 - accessibilityLabel values found: ${plan.repoScan.totals.accessibilityLabels}
+
+## Detected App Facts
+
+${detectedFacts}
 
 ## Risk Areas
 
@@ -73,5 +78,33 @@ ${apiTests}
 
 ${plan.recommendedNextSteps.map((step) => `- ${step}`).join("\n")}
 `;
+  }
+
+  private detectedFactsToMarkdown(plan: TestPlan): string {
+    const detections = plan.repoScan.detections;
+
+    return [
+      this.valuesToMarkdown("Screen/component names", [
+        ...detections.screens,
+        ...detections.components.filter(
+          (component) => !detections.screens.some((screen) => screen.value === component.value)
+        )
+      ]),
+      this.valuesToMarkdown("Route names", detections.routeNames),
+      this.valuesToMarkdown("API endpoint strings", detections.apiEndpoints),
+      this.valuesToMarkdown("Existing testID usage", detections.testIds),
+      this.valuesToMarkdown("Existing accessibilityLabel usage", detections.accessibilityLabels)
+    ].join("\n\n");
+  }
+
+  private valuesToMarkdown(title: string, values: RepoValueDetection[], limit = 12): string {
+    const items = values.slice(0, limit);
+    const remaining = values.length - items.length;
+    const body = items.length
+      ? items.map((item) => `- \`${item.value}\` (${item.files.slice(0, 3).join(", ")})`).join("\n")
+      : "- None detected.";
+    const suffix = remaining > 0 ? `\n- ...and ${remaining} more.` : "";
+
+    return `### ${title}\n\n${body}${suffix}`;
   }
 }

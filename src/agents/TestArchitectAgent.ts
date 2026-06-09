@@ -12,12 +12,12 @@ export class TestArchitectAgent {
     const risks = this.identifyRisks(feature, repoScan);
     const selectorGaps = this.findSelectorGaps(repoScan);
     const maestroFlow = this.createMaestroFlow(feature);
-    const apiTest = this.createApiTestSuggestion(feature);
+    const apiTest = this.createApiTestSuggestion(feature, repoScan);
 
     return {
       feature,
       generatedAt: new Date().toISOString(),
-      summary: `Deterministic MVP analysis for "${feature}" found ${repoScan.totals.filesScanned} relevant source files and prioritized user journey, API contract, selector, and regression risks.`,
+      summary: `Deterministic MVP analysis for "${feature}" found ${repoScan.totals.filesScanned} relevant source files, ${repoScan.detections.screens.length} screen names, ${repoScan.detections.routeNames.length} route names, ${repoScan.detections.apiEndpoints.length} API endpoint strings, and prioritized user journey, API contract, selector, and regression risks.`,
       risks,
       selectorGaps,
       maestroFlows: [maestroFlow],
@@ -63,15 +63,19 @@ export class TestArchitectAgent {
     };
   }
 
-  createApiTestSuggestion(feature: string): ApiTestSuggestion {
+  createApiTestSuggestion(feature: string, repoScan?: RepoScanResult): ApiTestSuggestion {
     const title = this.titleCase(feature);
+    const endpoint = repoScan?.detections.apiEndpoints[0]?.value ?? "/api/dishes";
+    const listEndpoint = endpoint.includes("{") || endpoint.includes("${") ? endpoint : endpoint.replace(/\/$/, "");
 
     return {
       name: `${title} API contract suggestion`,
       fileName: "generated-api-test.ts",
       notes: [
         "Uses Supertest-style assertions for create/list behavior.",
-        "Assumes an Express-compatible app export and JSON API routes."
+        repoScan?.detections.apiEndpoints.length
+          ? `Seeded from detected endpoint string ${endpoint}.`
+          : "Assumes an Express-compatible app export and JSON API routes."
       ],
       code: `import request from "supertest";
 import { app } from "../src/server";
@@ -79,7 +83,7 @@ import { app } from "../src/server";
 describe("${title} API", () => {
   it("creates a dish and returns it in the list response", async () => {
     const createResponse = await request(app)
-      .post("/api/dishes")
+      .post("${endpoint}")
       .send({
         name: "Lemon Herb Pasta",
         description: "Bright weeknight pasta with herbs",
@@ -94,7 +98,7 @@ describe("${title} API", () => {
     });
 
     const listResponse = await request(app)
-      .get("/api/dishes")
+      .get("${listEndpoint}")
       .expect(200);
 
     expect(listResponse.body.items).toEqual(
@@ -106,7 +110,7 @@ describe("${title} API", () => {
 
   it("rejects invalid dish payloads with validation details", async () => {
     const response = await request(app)
-      .post("/api/dishes")
+      .post("${endpoint}")
       .send({ name: "" })
       .expect(400);
 
@@ -121,6 +125,13 @@ describe("${title} API", () => {
     const navigationFiles = repoScan.files.filter((file) => file.signals.includes("navigation"));
     const apiFiles = repoScan.files.filter((file) => file.signals.includes("api-client"));
     const listFiles = repoScan.files.filter((file) => file.signals.includes("list-ui"));
+    const routes = this.formatExamples(repoScan.detections.routeNames.map((route) => route.value));
+    const screens = this.formatExamples(repoScan.detections.screens.map((screen) => screen.value));
+    const endpoints = this.formatExamples(repoScan.detections.apiEndpoints.map((endpoint) => endpoint.value));
+    const testIds = this.formatExamples(repoScan.detections.testIds.map((testId) => testId.value));
+    const accessibilityLabels = this.formatExamples(
+      repoScan.detections.accessibilityLabels.map((accessibilityLabel) => accessibilityLabel.value)
+    );
 
     return [
       {
@@ -130,7 +141,9 @@ describe("${title} API", () => {
         why: "The primary workflow must be stable before lower-value edge cases are automated.",
         evidence: [
           `${listFiles.length} list-oriented files suggest the feature depends on rendered collection state.`,
-          `${navigationFiles.length} navigation files suggest screen transitions are part of the journey.`
+          `${navigationFiles.length} navigation files suggest screen transitions are part of the journey.`,
+          routes ? `Detected route names: ${routes}.` : "No literal route names were detected.",
+          screens ? `Detected screen components: ${screens}.` : "No screen-like component names were detected."
         ],
         recommendedCoverage: [
           "Maestro flow for launch, create, save, and verify persisted UI state.",
@@ -145,7 +158,7 @@ describe("${title} API", () => {
         why: "Mobile UI failures often come from backend payload shape drift or validation mismatches.",
         evidence: [
           `${apiFiles.length} API-like files found.`,
-          "Generated tests assume create/list endpoints until a real repo reader extracts route metadata."
+          endpoints ? `Detected endpoint strings: ${endpoints}.` : "No literal API endpoint strings were detected."
         ],
         recommendedCoverage: [
           "Supertest create/list contract tests.",
@@ -160,7 +173,11 @@ describe("${title} API", () => {
         why: "Stable automation and accessible UI both depend on intentional identifiers and labels.",
         evidence: [
           `${repoScan.totals.testIds} testID selectors found.`,
-          `${repoScan.totals.accessibilityLabels} accessibility labels found.`
+          `${repoScan.totals.accessibilityLabels} accessibility labels found.`,
+          testIds ? `Existing testID values include: ${testIds}.` : "No literal testID values were detected.",
+          accessibilityLabels
+            ? `Existing accessibilityLabel values include: ${accessibilityLabels}.`
+            : "No literal accessibilityLabel values were detected."
         ],
         recommendedCoverage: [
           "Add testID to create, save, input, list, and card elements.",
@@ -199,5 +216,14 @@ describe("${title} API", () => {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
+  }
+
+  private formatExamples(values: string[], limit = 6): string {
+    const uniqueValues = [...new Set(values)];
+    const examples = uniqueValues.slice(0, limit).join(", ");
+    const remaining = uniqueValues.length - limit;
+
+    if (!examples) return "";
+    return remaining > 0 ? `${examples}, and ${remaining} more` : examples;
   }
 }

@@ -5,6 +5,12 @@ export interface SourceFileSummary {
   extension: string;
   imports: string[];
   exports: string[];
+  componentNames: string[];
+  screenNames: string[];
+  routeNames: string[];
+  apiEndpoints: string[];
+  testIds: string[];
+  accessibilityLabels: string[];
   interactiveElementCount: number;
   testIdCount: number;
   accessibilityLabelCount: number;
@@ -12,10 +18,25 @@ export interface SourceFileSummary {
   signals: string[];
 }
 
+export interface RepoValueDetection {
+  value: string;
+  files: string[];
+}
+
+export interface RepoScanDetections {
+  components: RepoValueDetection[];
+  screens: RepoValueDetection[];
+  routeNames: RepoValueDetection[];
+  apiEndpoints: RepoValueDetection[];
+  testIds: RepoValueDetection[];
+  accessibilityLabels: RepoValueDetection[];
+}
+
 export interface RepoScanResult {
   repoPath: string;
   scannedAt: string;
   files: SourceFileSummary[];
+  detections: RepoScanDetections;
   totals: {
     filesScanned: number;
     testIds: number;

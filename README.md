@@ -44,6 +44,9 @@ The generated plan includes:
 
 - High, medium, and low risk areas
 - Evidence from scanned source files
+- Detected React Native screen/component names and route names
+- Detected API endpoint strings
+- Existing `testID` and `accessibilityLabel` usage
 - Missing selector and accessibility recommendations
 - Maestro flow suggestions
 - Jest/Supertest API test suggestions
@@ -93,7 +96,9 @@ Future LLMProvider
 
 ## Repo Scanning Rules
 
-The repo reader scans only `.ts`, `.tsx`, `.js`, `.jsx`, and `.json` files. It ignores `node_modules`, `ios`, `android/build`, `.git`, `dist`, `build`, and `coverage`.
+The repo reader scans only `.ts`, `.tsx`, `.js`, `.jsx`, and `.json` files. It ignores `node_modules`, `ios`, `android/build`, `.git`, `.expo`, `.next`, `dist`, `build`, `coverage`, `output`, and package lockfiles.
+
+The scan extracts deterministic app facts from source files, including React Native screen/component names, React Navigation and Expo Router route names, API endpoint strings, and literal `testID`/`accessibilityLabel` values. These facts are written into both `test-plan.md` and `test-plan.json`.
 
 ## Roadmap
 
