@@ -1,0 +1,11 @@
+{
+  "name": "grocery-list",
+  "feature": "Grocery list generation",
+  "expectedQualities": [
+    "Identifies generated ingredient accuracy as a product risk",
+    "Includes offline or retry behavior coverage",
+    "Suggests API tests for list creation and validation",
+    "Checks accessibility labels for add/remove item controls"
+  ],
+  "minimumScore": 0.8
+}

@@ -1,0 +1,11 @@
+{
+  "name": "recipe-sharing",
+  "feature": "Recipe sharing",
+  "expectedQualities": [
+    "Identifies permissions and privacy as high risk",
+    "Includes happy-path and negative-path E2E coverage",
+    "Suggests API contract tests for sharing endpoints",
+    "Flags missing selectors on share buttons or recipient inputs"
+  ],
+  "minimumScore": 0.8
+}
