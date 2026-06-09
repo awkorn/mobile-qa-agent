@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { Command } from "commander";
 import { FailureAnalyzerAgent } from "./agents/FailureAnalyzerAgent.js";
 import { TestArchitectAgent } from "./agents/TestArchitectAgent.js";
+import { ApiTestWriter } from "./tools/ApiTestWriter.js";
 import { FailureLogReader } from "./tools/FailureLogReader.js";
 import { MaestroFlowWriter } from "./tools/MaestroFlowWriter.js";
 import { RepoReader } from "./tools/RepoReader.js";
@@ -29,12 +30,26 @@ export function runCli(): void {
         const reader = new RepoReader();
         const agent = new TestArchitectAgent();
         const writer = new TestPlanWriter();
+        const maestroWriter = new MaestroFlowWriter();
+        const apiTestWriter = new ApiTestWriter();
         const repoScan = await reader.scan(options.repo);
         const plan = agent.createPlan(options.feature, repoScan);
         const paths = await writer.write(options.output, plan);
+        const maestroPaths = await Promise.all(
+          plan.maestroFlows.map((flow) => maestroWriter.write(options.output, flow))
+        );
+        const apiTestPaths = await Promise.all(
+          plan.apiTestSuggestions.map((test) => apiTestWriter.write(options.output, test))
+        );
 
         console.log(`Wrote Markdown test plan: ${paths.markdownPath}`);
         console.log(`Wrote structured test plan: ${paths.jsonPath}`);
+        for (const path of maestroPaths) {
+          console.log(`Wrote generated Maestro flow: ${path}`);
+        }
+        for (const path of apiTestPaths) {
+          console.log(`Wrote generated API test: ${path}`);
+        }
       } catch (error) {
         handleError(error);
       }

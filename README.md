@@ -39,6 +39,8 @@ The `analyze` command writes:
 
 - `output/test-plan.md`
 - `output/test-plan.json`
+- `output/maestro/<feature>-generated-flow.yaml`
+- `output/api/<feature>-api-contract.generated.test.ts`
 
 The generated plan includes:
 
@@ -48,21 +50,25 @@ The generated plan includes:
 - Detected API endpoint strings
 - Existing `testID` and `accessibilityLabel` usage
 - Missing selector and accessibility recommendations
-- Maestro flow suggestions
-- Jest/Supertest API test suggestions
+- Generated Maestro flow files seeded from detected selectors and labels
+- Generated fetch-based API contract smoke tests seeded from detected endpoints
 - Recommended next steps for an SDET or mobile engineer
 
-The `generate-maestro` command writes a flow like:
+The generated Maestro flow starts as a repo-specific draft like:
 
 ```yaml
-appId: com.dishlist.app
+appId: REPLACE_WITH_APP_ID
 ---
 - launchApp
-- assertVisible: "DishList"
+- assertVisible: "Recipe name"
 - tapOn:
-    id: "create-dish-button"
-- assertVisible: "Create Dish"
+    id: "recipe-name-input"
+- inputText: "Generated QA test"
+- tapOn:
+    id: "save-recipe-button"
 ```
+
+Replace the `appId` and any sample input values before committing the generated flow into the target app.
 
 The `analyze-failure` command writes `output/failure-analysis.md` with likely cause, evidence, recommended fixes, and regression coverage.
 
@@ -76,6 +82,8 @@ CLI commands
   |     +-- RepoReader
   |     +-- TestArchitectAgent
   |     +-- TestPlanWriter
+  |     +-- MaestroFlowWriter
+  |     +-- ApiTestWriter
   |
   +-- generate-maestro
   |     |

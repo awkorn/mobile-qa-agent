@@ -160,7 +160,8 @@ export class RepoReader {
   private detectRouteNames(content: string, repoPath: string, filePath: string): string[] {
     const routes = [
       ...this.matchGroup(content, /<[A-Za-z0-9_.]*Screen\b[^>]*\bname=(?:"([^"]+)"|'([^']+)'|\{\s*["']([^"']+)["']\s*\})/g),
-      ...this.matchGroup(content, /\b(?:navigate|replace|push|jumpTo)\s*\(\s*["']([^"']+)["']/g)
+      ...this.matchGroup(content, /\b(?:navigate|replace|jumpTo)\s*\(\s*["']([^"']+)["']/g),
+      ...this.matchGroup(content, /\b(?:navigation|router)\.(?:navigate|replace|push|jumpTo)\s*\(\s*["']([^"']+)["']/g)
     ];
     const expoRoute = this.detectExpoRouteName(repoPath, filePath);
 
