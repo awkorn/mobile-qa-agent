@@ -6,6 +6,8 @@ import { TestArchitectAgent } from "./agents/TestArchitectAgent.js";
 import { ApiTestWriter } from "./tools/ApiTestWriter.js";
 import { FailureLogReader } from "./tools/FailureLogReader.js";
 import { MaestroFlowWriter } from "./tools/MaestroFlowWriter.js";
+import { ProjectProfiler } from "./tools/ProjectProfiler.js";
+import { ProjectProfileWriter } from "./tools/ProjectProfileWriter.js";
 import { RepoReader } from "./tools/RepoReader.js";
 import { TestPlanWriter } from "./tools/TestPlanWriter.js";
 
@@ -18,6 +20,25 @@ export function runCli(): void {
     .name("ai-mobile-test-architect")
     .description("AI-ready mobile test architecture CLI for React Native apps")
     .version("0.1.0");
+
+  program
+    .command("profile")
+    .description("Profile a React Native repo's framework, tooling, scripts, app IDs, and test layout")
+    .requiredOption("--repo <path>", "Path to the target app repo")
+    .option("--output <dir>", "Output directory", DEFAULT_OUTPUT_DIR)
+    .action(async (options: { repo: string; output: string }) => {
+      try {
+        const profiler = new ProjectProfiler();
+        const writer = new ProjectProfileWriter();
+        const profile = await profiler.profile(options.repo);
+        const paths = await writer.write(options.output, profile);
+
+        console.log(`Wrote Markdown project profile: ${paths.markdownPath}`);
+        console.log(`Wrote structured project profile: ${paths.jsonPath}`);
+      } catch (error) {
+        handleError(error);
+      }
+    });
 
   program
     .command("analyze")

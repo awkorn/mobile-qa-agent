@@ -21,6 +21,12 @@ Analyze a target app repo:
 npm run dev -- analyze --repo ../dishlist --feature "Recipe sharing"
 ```
 
+Profile a target app repo before generating tests:
+
+```bash
+npm run dev -- profile --repo ../dishlist
+```
+
 Generate a Maestro flow:
 
 ```bash
@@ -44,6 +50,7 @@ The `analyze` command writes:
 
 The generated plan includes:
 
+- A project profile with framework, package manager, scripts, app IDs, test tools, and test directories
 - High, medium, and low risk areas
 - Evidence from scanned source files
 - Detected React Native screen/component names and route names
@@ -72,13 +79,26 @@ Replace the `appId` and any sample input values before committing the generated 
 
 The `analyze-failure` command writes `output/failure-analysis.md` with likely cause, evidence, recommended fixes, and regression coverage.
 
+The `profile` command writes:
+
+- `output/project-profile.md`
+- `output/project-profile.json`
+
+Use this as step one before turning the CLI into a fuller agent. It tells the generator whether the target app is Expo or React Native CLI, which package manager and scripts to use, which test frameworks already exist, whether Maestro/Detox folders are present, where source and test files live, and whether iOS/Android app IDs can be detected.
+
 ## Architecture
 
 ```text
 CLI commands
   |
+  +-- profile
+  |     |
+  |     +-- ProjectProfiler
+  |     +-- ProjectProfileWriter
+  |
   +-- analyze
   |     |
+  |     +-- ProjectProfiler
   |     +-- RepoReader
   |     +-- TestArchitectAgent
   |     +-- TestPlanWriter

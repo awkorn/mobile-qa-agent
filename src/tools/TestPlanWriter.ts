@@ -36,6 +36,7 @@ ${risk.recommendedCoverage.map((item) => `- ${item}`).join("\n")}`
     const apiTests = plan.apiTestSuggestions
       .map((test) => `- **${test.name}** (${test.fileName}): ${test.notes.join(" ")}`)
       .join("\n");
+    const projectProfile = this.projectProfileToMarkdown(plan);
     const detectedFacts = this.detectedFactsToMarkdown(plan);
 
     return `# Risk-Based Test Plan: ${plan.feature}
@@ -53,6 +54,10 @@ ${plan.summary}
 - API-like files: ${plan.repoScan.totals.apiLikeFiles}
 - testID selectors found: ${plan.repoScan.totals.testIds}
 - accessibilityLabel values found: ${plan.repoScan.totals.accessibilityLabels}
+
+## Project Profile
+
+${projectProfile}
 
 ## Detected App Facts
 
@@ -78,6 +83,35 @@ ${apiTests}
 
 ${plan.recommendedNextSteps.map((step) => `- ${step}`).join("\n")}
 `;
+  }
+
+  private projectProfileToMarkdown(plan: TestPlan): string {
+    const profile = plan.repoScan.profile;
+    const scripts = Object.entries(profile.scripts)
+      .filter((entry): entry is [string, string] => Boolean(entry[1]))
+      .map(([name, command]) => `- ${name}: \`${command}\``)
+      .join("\n");
+
+    return [
+      `- Package: ${profile.packageName ?? "unknown"}`,
+      `- Package manager: ${profile.packageManager}`,
+      `- Framework: ${profile.framework}`,
+      `- Languages: ${this.joinOrNone(profile.languages)}`,
+      `- iOS appId: ${profile.appIds.ios ?? "not detected"}`,
+      `- Android appId: ${profile.appIds.android ?? "not detected"}`,
+      `- Test frameworks: ${this.joinOrNone(profile.testFrameworks)}`,
+      `- E2E frameworks: ${this.joinOrNone(profile.e2eFrameworks)}`,
+      `- API test tools: ${this.joinOrNone(profile.apiTestTools)}`,
+      `- Source roots: ${this.joinOrNone(profile.sourceRoots)}`,
+      `- Test directories: ${this.joinOrNone(profile.testDirectories)}`,
+      `- E2E directories: ${this.joinOrNone(profile.e2eDirectories)}`,
+      "",
+      "Scripts:",
+      scripts || "- None detected.",
+      "",
+      "Profiler recommendations:",
+      profile.recommendations.map((recommendation) => `- ${recommendation}`).join("\n") || "- No setup gaps detected."
+    ].join("\n");
   }
 
   private detectedFactsToMarkdown(plan: TestPlan): string {
@@ -106,5 +140,9 @@ ${plan.recommendedNextSteps.map((step) => `- ${step}`).join("\n")}
     const suffix = remaining > 0 ? `\n- ...and ${remaining} more.` : "";
 
     return `### ${title}\n\n${body}${suffix}`;
+  }
+
+  private joinOrNone(values: string[]): string {
+    return values.length ? values.join(", ") : "none detected";
   }
 }

@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { basename, extname, join, relative } from "node:path";
 import type { RepoScanDetections, RepoScanResult, SourceFileSummary } from "../types/TestArchitecture.js";
+import { ProjectProfiler } from "./ProjectProfiler.js";
 
 const ALLOWED_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".json"]);
 const IGNORED_DIRECTORIES = new Set([
@@ -29,6 +30,8 @@ export class RepoReader {
   constructor(private readonly options: RepoReaderOptions = {}) {}
 
   async scan(repoPath: string): Promise<RepoScanResult> {
+    const profiler = new ProjectProfiler();
+    const profile = await profiler.profile(repoPath);
     const files = await this.walk(repoPath);
     const summaries: SourceFileSummary[] = [];
     const maxFiles = this.options.maxFiles ?? 80;
@@ -40,6 +43,7 @@ export class RepoReader {
     return {
       repoPath,
       scannedAt: new Date().toISOString(),
+      profile,
       files: summaries,
       detections: this.aggregateDetections(summaries),
       totals: {

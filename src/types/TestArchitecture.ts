@@ -35,6 +35,7 @@ export interface RepoScanDetections {
 export interface RepoScanResult {
   repoPath: string;
   scannedAt: string;
+  profile: ProjectProfile;
   files: SourceFileSummary[];
   detections: RepoScanDetections;
   totals: {
@@ -44,6 +45,38 @@ export interface RepoScanResult {
     components: number;
     apiLikeFiles: number;
   };
+}
+
+export type PackageManager = "npm" | "yarn" | "pnpm" | "bun" | "unknown";
+export type ReactNativeFramework = "expo" | "react-native-cli" | "unknown";
+
+export interface ProjectProfile {
+  packageName?: string;
+  packageManager: PackageManager;
+  framework: ReactNativeFramework;
+  languages: string[];
+  appIds: {
+    ios?: string;
+    android?: string;
+  };
+  scripts: {
+    test?: string;
+    lint?: string;
+    typecheck?: string;
+    e2e?: string;
+    ios?: string;
+    android?: string;
+    start?: string;
+  };
+  testFrameworks: string[];
+  e2eFrameworks: string[];
+  apiTestTools: string[];
+  sourceRoots: string[];
+  testDirectories: string[];
+  e2eDirectories: string[];
+  configFiles: string[];
+  dependencies: string[];
+  recommendations: string[];
 }
 
 export interface RiskArea {
