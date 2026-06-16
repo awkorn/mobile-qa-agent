@@ -2,7 +2,7 @@
 
 `ai-mobile-test-architect` is a TypeScript CLI skeleton for an AI-powered mobile test architecture agent. It is designed for React Native teams that want faster SDET planning loops: scan a repo, identify product and automation risks, generate a risk-based test plan, draft Maestro E2E flows, suggest Jest/Supertest API tests, and summarize failure logs.
 
-The MVP uses deterministic mock logic so it is useful without API keys. The architecture is intentionally ready for a future LLM provider.
+The MVP keeps deterministic planning available so it is useful without API keys, and also supports an OpenAI-compatible LLM planner that emits strict JSON plan specs.
 
 ## Why It Exists
 
@@ -20,6 +20,27 @@ Analyze a target app repo:
 ```bash
 npm run dev -- analyze --repo ../dishlist --feature "Recipe sharing"
 ```
+
+Use the LLM planner for strict JSON planning:
+
+```bash
+export MOBILE_QA_LLM_API_KEY="..."
+export MOBILE_QA_LLM_MODEL="..."
+npm run dev -- analyze --repo ../dishlist --feature "Recipe sharing" --planner llm
+```
+
+The `analyze` command supports three planner modes:
+
+- `--planner auto` uses the LLM planner when `MOBILE_QA_LLM_API_KEY` or `OPENAI_API_KEY` and a model are configured, then falls back to deterministic planning if not configured.
+- `--planner llm` requires an LLM response that conforms to the strict JSON schema.
+- `--planner deterministic` never calls an LLM.
+
+LLM configuration can be supplied with environment variables or flags:
+
+- `MOBILE_QA_LLM_API_KEY` or `OPENAI_API_KEY`
+- `MOBILE_QA_LLM_MODEL`, `OPENAI_MODEL`, or `--llm-model`
+- `MOBILE_QA_LLM_BASE_URL`, `OPENAI_BASE_URL`, or `--llm-base-url` for OpenAI-compatible providers
+- `MOBILE_QA_LLM_TIMEOUT_MS` or `--llm-timeout-ms`
 
 Profile a target app repo before generating tests:
 
@@ -118,7 +139,8 @@ CLI commands
 
 Future LLMProvider
   |
-  +-- can replace deterministic logic inside agents
+  +-- LlmPlannerAgent emits a strict JSON plan spec
+  +-- TestArchitectAgent remains the deterministic fallback
   +-- can reuse prompt files under src/prompts
 ```
 
@@ -130,7 +152,6 @@ The scan parses `.ts`, `.tsx`, `.js`, and `.jsx` files with the TypeScript compi
 
 ## Roadmap
 
-- Add OpenAI/Claude provider
 - Add MCP GitHub repo reader
 - Add Playwright/Maestro MCP test execution
 - Add PR risk analysis
