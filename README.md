@@ -126,7 +126,7 @@ Future LLMProvider
 
 The repo reader scans only `.ts`, `.tsx`, `.js`, `.jsx`, and `.json` files. It ignores `node_modules`, `ios`, `android/build`, `.git`, `.expo`, `.next`, `dist`, `build`, `coverage`, `output`, and package lockfiles.
 
-The scan extracts deterministic app facts from source files, including React Native screen/component names, React Navigation and Expo Router route names, API endpoint strings, and literal `testID`/`accessibilityLabel` values. These facts are written into both `test-plan.md` and `test-plan.json`.
+The scan parses `.ts`, `.tsx`, `.js`, and `.jsx` files with the TypeScript compiler API to extract deterministic app facts, including React Native screen/component names, React Navigation and Expo Router route names, API endpoint strings, imports/exports, interactive UI signals, and literal `testID`/`accessibilityLabel` values. These facts are written into both `test-plan.md` and `test-plan.json`.
 
 ## Roadmap
 
