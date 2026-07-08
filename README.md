@@ -157,7 +157,3 @@ The scan parses `.ts`, `.tsx`, `.js`, and `.jsx` files with the TypeScript compi
 - Add PR risk analysis
 - Add CI log ingestion
 - Add evals for generated test quality
-
-## Resume Bullet
-
-“Built an AI-powered mobile test architecture agent that analyzes React Native source code, generates risk-based test plans, creates Maestro E2E flows and API test suggestions, and summarizes failures.”
